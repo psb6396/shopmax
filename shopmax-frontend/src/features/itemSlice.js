@@ -41,7 +41,16 @@ export const fetchItemByIdThunk = createAsyncThunk(
 // 전체 상품 리스트 가져오기
 export const fetchItemsThunk = createAsyncThunk(
   'items/fetchItems',
-  async (data, { rejectWithValue }) => {}
+  async (data, { rejectWithValue }) => {
+    try {
+      const response = await getItems(itemData)
+      return response.data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || '상품 리스트 불러오기 실패'
+      )
+    }
+  }
 )
 
 const itemSlice = createSlice({
@@ -61,10 +70,24 @@ const itemSlice = createSlice({
         state.loading = true
         state.error = null
       })
-      .addCase(createItemThunk.fulfilled, (state, action) => {
+      .addCase(createItemThunk.fulfilled, (state) => {
         state.loading = false
       })
       .addCase(createItemThunk.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+    builder
+      .addCase(fetchItemsThunk.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchItemsThunk.fulfilled, (state, action) => {
+        state.loading = false
+        state.items = action.payload.items
+        state.pagination = action.payload.pagination
+      })
+      .addCase(fetchItemsThunk.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })

@@ -15,3 +15,24 @@ export const createItem = async (itemData) => {
     throw error
   }
 }
+
+//전체 상품 리스트 가져오기
+export const getItems = async (data) => {
+  try {
+    const {
+      page,
+      limit,
+      searchTerm = '',
+      searchCategory = '',
+      sellCategory = '',
+    } = data
+
+    const response = await shopmaxApi.get(
+      `/item?page=${page}&limit=${limit}&sellCategory=${sellCategory}&searchTerm=${searchTerm}&searchCategory=${searchCategory}`
+    )
+    return response
+  } catch (error) {
+    console.error(`API Request오류:${error.message}`)
+    throw error
+  }
+}

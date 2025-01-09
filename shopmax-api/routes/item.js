@@ -3,6 +3,7 @@ const router = express.Router()
 const { isAdmin } = require('./middlewares')
 const { Item, Img } = require('../models')
 const fs = require('fs')
+const { Op } = require('sequelize')
 const path = require('path')
 const multer = require('multer')
 
@@ -78,6 +79,84 @@ router.post('/', isAdmin, upload.array('img'), async (req, res) => {
     })
   } catch (error) {
     console.error(error)
+  }
+})
+
+//전체상품 불러오기(페이징, 검색 기능)
+//localhost:8000/item?page=1&limit=3&sellCategory=SELL&searchTerm=가방&searchCategory=itemNm => 판매중인 상품들에서 상품명 '가방' 으로 검색
+//localhost:8000/item?page=1&limit=3&sellCategory=SOLD_OUT&searchTerm=가방&searchCategory=itemDetail => 품절된 상품들에서 상품설명 '가방' 으로 검색
+router.get('/', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page, 10) || 1
+    const limit = parseInt(req.query.limit, 10) || 5
+    const offset = (page - 1) * limit
+    //판매상태, 상품명, 상품설명으로 검색
+    const searchTerm = req.query.searchTerm || '' //사용자가 입력한 검색어
+    const searchCategory = req.query.searchCategory || 'itemNm' //상품명 or 상품설명으로 검색
+    const sellCategory = req.query.sellCategory // 판매상태('SELL' 또는 'SOLD_OUT' 만 존재)
+
+    /*
+      스프레드 연산자(...)를 사용하는 이유는 조건적으로 객체를 추가하기 위해서 
+      스프레드 연산자는 "",false,0,null, undefined 와 같은 falsy값들은 무시하고 값이 true일때는 반환된 객체를 추가
+    */
+
+    const whereClause = {
+      //searchTerm 이 존재하면 해당 검색어(searchTerm)가 포함된 검색범주(searchCategory)를 조건으로 추가
+      ...(searchTerm && {
+        [searchCategory]: {
+          [Op.like]: `%${searchTerm}%`,
+        },
+      }),
+      ...(sellCategory && {
+        itemSellStatus: sellCategory,
+      }),
+    }
+
+    //localhost:8000/item?page=1&limit=3&sellCategory=SOLD_OUT&searchTerm=가방&searchCategory=itemDetail => 품절된 상품들에서 상품설명 '가방' 으로 검색
+    /*
+      whereClause = {
+        itemDetail: {
+          [Op.like]: '가방'
+        },
+        itemSellStatus: 'SELL',
+      }
+    */
+
+    const count = await Item.findAll({
+      where: whereClause,
+    })
+
+    const items = await Item.findAll({
+      where: whereClause,
+      limit,
+      offset,
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: Img,
+          attributes: ['id', 'oriImgName', 'imgUrl', 'repImgYn'],
+        },
+      ],
+    })
+
+    res.json({
+      success: true,
+      message: '상품 목록 조회 성공',
+      items,
+      pagination: {
+        totalItems: count,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+        limit,
+      },
+    })
+  } catch (error) {
+    console.error(error)
+    res.status(500).json({
+      success: false,
+      message: '상품 목록 조회중 오류가 발생했습니다',
+      error,
+    })
   }
 })
 
