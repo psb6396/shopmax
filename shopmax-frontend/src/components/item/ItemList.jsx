@@ -25,7 +25,7 @@ import dayjs from 'dayjs'
 import { useState, useEffect, useCallback } from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchItemsThunk } from '../../features/itemSlice'
+import { deleteItemThunk, fetchItemsThunk } from '../../features/itemSlice'
 
 function ItemList() {
   const dispatch = useDispatch()
@@ -38,6 +38,28 @@ function ItemList() {
   const [sellCategory, setSellCategory] = useState('') // SELL, SOLD_OUT
   const [searchSubmit, setSearchSubmit] = useState(false) // 검색버튼 클릭 상태
   const [page, setPage] = useState(1) // 페이지 번호
+
+  //상품 삭제
+  const handleDeleteThunk = useCallback(
+    (id) => {
+      const result = window.confirm('삭제하시겠습니까?')
+
+      if (result) {
+        dispatch(deleteItemThunk(id))
+          .unwrap()
+          .then(() => {
+            window.location.href = '/items/createlist'
+          })
+          .catch((error) => {
+            console.error('삭제 에러:', error)
+            alert(`삭제 실패:${error}`)
+          })
+      } else {
+        return
+      }
+    },
+    [dispatch]
+  )
 
   // 데이터 가져오기
   useEffect(() => {
@@ -134,7 +156,7 @@ function ItemList() {
                   <TableCell align='center'>{item.createdAt}</TableCell>
                   <TableCell align='center'>
                     <IconButton aria-label='delete'>
-                      <DeleteIcon />
+                      <DeleteIcon onClick={() => handleDeleteThunk(item.id)} />
                     </IconButton>
                   </TableCell>
                 </TableRow>
