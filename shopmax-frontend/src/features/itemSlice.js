@@ -29,7 +29,14 @@ export const updateItemThunk = createAsyncThunk(
 // 상품 삭제
 export const deleteItemThunk = createAsyncThunk(
   'items/deleteItem',
-  async (id, { rejectWithValue }) => {}
+  async (id, { rejectWithValue }) => {
+    try {
+      await deleteItem(id)
+      return id
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || '상품 삭제 실패')
+    }
+  }
 )
 
 // 특정 상품 가져오기
@@ -88,6 +95,19 @@ const itemSlice = createSlice({
         state.pagination = action.payload.pagination
       })
       .addCase(fetchItemsThunk.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+    // 상품 삭제
+    builder
+      .addCase(deleteItemThunk.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(deleteItemThunk.fulfilled, (state, action) => {
+        state.loading = false
+      })
+      .addCase(deleteItemThunk.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })

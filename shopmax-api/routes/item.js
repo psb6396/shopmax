@@ -160,4 +160,27 @@ router.get('/', async (req, res) => {
   }
 })
 
+//상품 삭제 localhost:8000/item/:id
+router.delete(':id', isAdmin, async (req, res) => {
+  try {
+    const { id } = req.params //상품 id
+
+    //상품이 존재하는지 확인
+    const item = await Item.findByPk(id)
+    if (!item) {
+      return res
+        .status(404)
+        .json({ success: false, message: '상품을 찾을 수 없습니다.' })
+    }
+
+    //상품삭제(연관된 이미지도 삭제 됨.cascade때매)
+    await item.destroy()
+
+    res.json({
+      success: true,
+      message: '상품이 성공적으로 삭제되었습니다.',
+    })
+  } catch (error) {}
+})
+
 module.exports = router
