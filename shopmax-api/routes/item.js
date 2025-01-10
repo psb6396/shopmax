@@ -184,7 +184,7 @@ router.delete(':id', isAdmin, async (req, res) => {
 })
 
 //특정상품 불러오기
-router.get(':/id', async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params
 
@@ -220,7 +220,7 @@ router.get(':/id', async (req, res) => {
 })
 
 //상품수정
-router.put(':/id', isAdmin, upload.array('img'), async (req, res) => {
+router.put('/:id', isAdmin, upload.array('img'), async (req, res) => {
   try {
     const { id } = req.params
     const { itemNm, price, stockNumber, itemDetail, itemSellStatus } = req.body

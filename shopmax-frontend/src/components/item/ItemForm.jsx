@@ -11,10 +11,18 @@ import {
 import { formatWithComma, stripComma } from '../../utils/priceSet'
 
 function ItemForm({ onSubmit, initialValues = {} }) {
-  const [imgUrls, setImgUrls] = useState([]) //이미지 경로
+  const [imgUrls, setImgUrls] = useState(
+    initialValues.Imgs
+      ? initialValues.Imgs.map(
+          (img) => process.env.REACT_APP_API_URL + img.imgUrl
+        )
+      : []
+  ) //이미지 경로
   const [imgFiles, setImgFiles] = useState([]) //이미지 파일 객체
-  const [itemNm, setItemNm] = useState('') //상품명
-  const [price, setPrice] = useState('') //가격
+  const [itemNm, setItemNm] = useState(initialValues.itemNm || '') //상품명
+  const [price, setPrice] = useState(
+    initialValues.price ? String(initialValues.price) : ''
+  ) //가격
   const [stockNumber, setStockNumber] = useState('') //재고
   const [itemSellStatus, setItemSellStatus] = useState('SELL') //판매상태
   const [itemDetail, setItemDetail] = useState('') //상품설명
