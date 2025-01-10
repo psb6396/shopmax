@@ -23,7 +23,15 @@ export const createItemThunk = createAsyncThunk(
 // 상품 수정
 export const updateItemThunk = createAsyncThunk(
   'items/updateItem',
-  async (data, { rejectWithValue }) => {}
+  async (data, { rejectWithValue }) => {
+    try {
+      const { id, itemData } = data
+      const response = await updateItem(id, itemData)
+      return response.data.item
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || '상품 삭제 실패')
+    }
+  }
 )
 
 // 상품 삭제
@@ -42,9 +50,17 @@ export const deleteItemThunk = createAsyncThunk(
 // 특정 상품 가져오기
 export const fetchItemByIdThunk = createAsyncThunk(
   'items/fetchItemById',
-  async (id, { rejectWithValue }) => {}
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await getItemById(id)
+      return response.data
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || '상품 불러오기 실패'
+      )
+    }
+  }
 )
-
 // 전체 상품 리스트 가져오기
 export const fetchItemsThunk = createAsyncThunk(
   'items/fetchItems',
@@ -108,6 +124,33 @@ const itemSlice = createSlice({
         state.loading = false
       })
       .addCase(deleteItemThunk.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+    //상품수정
+    builder
+      .addCase(updateItemThunk.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(updateItemThunk.fulfilled, (state, action) => {
+        state.loading = false
+      })
+      .addCase(updateItemThunk.rejected, (state, action) => {
+        state.loading = false
+        state.error = action.payload
+      })
+    //특정 상품 불러오기
+    builder
+      .addCase(fetchItemByIdThunk.pending, (state) => {
+        state.loading = true
+        state.error = null
+      })
+      .addCase(fetchItemByIdThunk.fulfilled, (state, action) => {
+        state.loading = false
+        state.item = action.payload.item
+      })
+      .addCase(fetchItemByIdThunk.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
       })
